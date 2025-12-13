@@ -41,7 +41,16 @@ router.post('/add', upload, async (req, res) => {
 });
 
 router.get("/", (req, res) => {
-    res.render('index', { title: "Home Page" });
+    User.find().exec((err, users) =>{
+        if(err){
+            res.json({message: err.message });
+        } else {
+            res.render('index',{
+                title: 'Home Page',
+                users: users 
+            })
+        }
+    })
 });
 
 router.get("/add", (req, res) => {

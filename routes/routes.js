@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/users');
 const multer = require('multer');
 const path = require("path");
+const fs = require("fs");
 
 /* =======================
    IMAGE UPLOAD (MULTER)
@@ -70,6 +71,92 @@ router.get("/", async (req, res) => {
 router.get("/add", (req, res) => {
     res.render("add_users", { title: "Add User" });
 });
+//edit user route
+router.get('/edit/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.redirect('/');
+        }
+
+        res.render("edit_users", {
+            title: "Edit User",
+            user: user
+        });
+    } catch (error) {
+        console.error(error);
+        res.redirect('/');
+    }
+});
+
+// UPDATE USER ROUTE (MODERN + SAFE)
+// update user route
+router.post("/update/:id", upload, async (req, res) => {
+    try {
+        let new_image = req.body.old_image;
+
+        if (req.file) {
+            new_image = req.file.filename;
+
+            if (req.body.old_image) {
+                fs.unlinkSync(path.join(__dirname, "..", "uploads", req.body.old_image));
+            }
+        }
+
+        await User.findByIdAndUpdate(req.params.id, {
+            name: req.body.name,
+            email: req.body.email,
+            phone: req.body.phone,
+            image: new_image,
+        });
+
+        // ✅ SET MESSAGE
+        req.session.message = {
+            type: "success",
+            message: "User updated successfully!",
+        };
+
+        // ✅ REDIRECT AFTER SETTING MESSAGE
+        res.redirect("/");
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Update failed");
+    }
+});
+
+// DELETE USER ROUTE (MODERN + SAFE)
+router.get('/delete/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.redirect('/');
+        }
+
+        // delete image if exists
+        if (user.image) {
+            const imagePath = path.join(__dirname, "..", "uploads", user.image);
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+            }
+        }
+
+        await User.findByIdAndDelete(req.params.id);
+
+        req.session.message = {
+            type: "info",
+            message: "User deleted successfully!",
+        };
+
+        res.redirect('/');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Delete failed");
+    }
+});
+
 
 module.exports = router;
 

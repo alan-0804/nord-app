@@ -3,6 +3,7 @@ require('dotenv').config();
 const express =  require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
+const path =require("path");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -19,6 +20,7 @@ db.once("open",()=>console.log("Connected to the database!"));
 app.use(express.urlencoded({extended: false }));
 app.use(express.json());
 
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(
     session({
         secret: "my secret key ",

@@ -126,36 +126,28 @@ router.post("/update/:id", upload, async (req, res) => {
     }
 });
 
-// DELETE USER ROUTE (MODERN + SAFE)
-router.get('/delete/:id', async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id);
-
-        if (!user) {
-            return res.redirect('/');
-        }
-
-        // delete image if exists
-        if (user.image) {
-            const imagePath = path.join(__dirname, "..", "uploads", user.image);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
+// delete user route
+router.get('/delete/:id' ,(req, res) => {
+    let id = req.params.id;
+    User.findById(id, (err, result) => {
+        if(result.image != ''){
+            try{
+                fs.unlinkSync('./uploads/'+result.image);
+            }catch(err){
+                console.log(err);
             }
         }
-
-        await User.findByIdAndDelete(req.params.id);
-
-        req.session.message = {
-            type: "info",
-            message: "User deleted successfully!",
-        };
-
-        res.redirect('/');
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Delete failed");
-    }
-});
+        if(err){
+            res.json({ message: err.message });
+        } else {
+            req.session.message = {
+                type:'info',
+                message: 'User deleted successfully!'
+            };
+            res.redirect('/');
+        }
+    })
+})
 
 
 module.exports = router;
